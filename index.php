@@ -39,9 +39,7 @@ if ($dom->loadHTML($data)) {
     $movieIndex = $items->item(1)->getAttribute("href");
     $movieData = getMovieItems(trimSlashFromUrl($url).$movieIndex, $dom);
 
-    $indexArray[] = array($calenderData);
 
-    //print_r($indexArray);
     //print_r($calenderData);
 }
 
@@ -73,10 +71,7 @@ function curl_get_request($url) {
 }
 
 function getCalendarItems($calendar, $dom) {
-    $calendarArray = array();
-    $paulArray = array();
-    $peterArray = array();
-    $maryArray = array();
+    $personArray = array();
     $data = curl_get_request($calendar);
     libxml_use_internal_errors(true);
 
@@ -86,31 +81,37 @@ function getCalendarItems($calendar, $dom) {
         $items = $xpath->query('//ul//li/a');
 
         $paulIndex =  $items->item(0)->getAttribute("href");
-        $paulData = getPersonCalendar($calendar."/".$paulIndex, $dom);
+        $paulArray = getPersonCalendar($calendar."/".$paulIndex, $dom);
+        array_push($personArray, $paulArray);
 
         $peterIndex =  $items->item(1)->getAttribute("href");
-        $peterData = getPersonCalendar($calendar."/".$peterIndex, $dom);
+        $peterArray = getPersonCalendar($calendar."/".$peterIndex, $dom);
+        array_push($personArray, $peterArray);
 
         $maryIndex =  $items->item(2)->getAttribute("href");
-        $maryData = getPersonCalendar($calendar."/".$maryIndex, $dom);
+        $maryArray = getPersonCalendar($calendar."/".$maryIndex, $dom);
+        array_push($personArray, $maryArray);
 
-        /*$paulArray[] = array($paulData);
-        $peterArray[] = array($peterData);
-        $maryArray[] = array($maryData);*/
-
-        /*foreach ($items as $item) {
-            $collections = $item->nodeValue;
-            $calendarArray[] = array($collections);
-        }*/
-
-        //return $calendarArray;
+        checkAvailableCinemaDays($personArray);
     }
 }
 
+function checkAvailableCinemaDays($personArray) {
+    $availableDays = array();
+    if ($personArray[0][0] == $personArray[1][0] && $personArray[0][0] == $personArray[2][0] && $personArray[1][0] == $personArray[2][0]) {
+        array_push($availableDays, "Fredag");
+    }
+    if ($personArray[0][1] == $personArray[1][1] && $personArray[0][1] == $personArray[2][1] && $personArray[1][1] == $personArray[2][1]) {
+        array_push($availableDays, "Lördag");
+    }
+    if ($personArray[0][2] == $personArray[1][2] && $personArray[0][2] == $personArray[2][2] && $personArray[1][2] == $personArray[2][2]) {
+        array_push($availableDays, "Söndag");
+    }
+    return $availableDays;
+}
+
 function getPersonCalendar($person, $dom) {
-    $paulArray = array();
-    $peterArray = array();
-    $maryArray = array();
+    $personCalendarArray = array();
     $data = curl_get_request($person);
     libxml_use_internal_errors(true);
 
@@ -118,34 +119,16 @@ function getPersonCalendar($person, $dom) {
         libxml_use_internal_errors(false);
         $xpath = new DOMXPath($dom);
         $items = $xpath->query('//table//tr/td');
-
         foreach ($items as $item) {
-            $collections = $item->nodeValue;
-            $paulArray[] = array($collections);
+            array_push($personCalendarArray, strtolower($item->nodeValue));
         }
 
-        foreach ($items as $item) {
-            $collections = $item->nodeValue;
-            $peterArray[] = array($collections);
-        }
-
-        foreach ($items as $item) {
-            $collections = $item->nodeValue;
-            $maryArray[] = array($collections);
-        }
-        echo "<pre>";
-        print_r($peterArray[1]);
-        /*print_r($maryArray);
-        print_r($paulArray);*/
-        echo "</pre>";
-
-       /* if ($peterArray[0]) {
-
-        }*/
+        return $personCalendarArray;
     }
 }
 
 function getMovieItems($movie, $dom) {
+
     $movieArray = array();
     $data = curl_get_request($movie);
     libxml_use_internal_errors(true);
@@ -159,7 +142,9 @@ function getMovieItems($movie, $dom) {
             $collections = $item->nodeValue;
             $movieArray[] = array($collections);
         }
-
+        echo "<pre>";
+        print_r($movieArray);
+        echo "</pre>";
         return $movieArray;
     }
 }
