@@ -15,58 +15,61 @@
             <input type='submit' value='Starta' />
         </div>
     </form>
-
     </body>
 </html>
 
 <?php
-ini_set('display_errors', 'Off');
+ini_set('display_errors', 'On');
 
 checkButton();
+start();
 
-$availableMoviesToWatch = array();
-$url = $_POST['url'];
-$data = curl_get_request($url);
-$dom = new DomDocument();
+function start() {
+    $availableMoviesToWatch = array();
+    $url = $_POST['url'];
+    $data = file_get_contents($url);
+    $dom = new DomDocument();
 
-if ($dom->loadHTML($data)) {
-    $xpath = new DOMXPath($dom);
-    $items = $xpath->query('//li/a');
-    $indexArray = array();
+    if ($dom->loadHTML($data)) {
+        $xpath = new DOMXPath($dom);
+        $items = $xpath->query('//li/a');
 
-    $calendarIndex =  $items->item(0)->getAttribute("href");
-    $availableDays = getCalendarItems(trimSlashFromUrl($url).$calendarIndex, $dom);
+        $calendarIndex =  $items->item(0)->getAttribute("href");
+        $availableDays = getCalendarItems(trimSlashFromUrl($url).$calendarIndex, $dom);
 
-    $movieIndex = $items->item(1)->getAttribute("href");
-    $getMovies = getMovieValues(trimSlashFromUrl($url).$movieIndex, $dom);
-    $movieOptions = checkAvailableCinema($availableDays, $getMovies, trimSlashFromUrl($url).$movieIndex);
+        $movieIndex = $items->item(1)->getAttribute("href");
+        $getMovies = getMovieValues(trimSlashFromUrl($url).$movieIndex, $dom);
+        $movieOptions = checkAvailableCinema($availableDays, $getMovies, trimSlashFromUrl($url).$movieIndex);
 
-    foreach ($movieOptions as $movieOption) {
-        if ($movieOption["movie"] == 01) {
-            $movieOption["movie"] = "Söderkåkar";
+        foreach ($movieOptions as $movieOption) {
+            if ($movieOption["movie"] == 01) {
+                $movieOption["movie"] = "Söderkåkar";
+            }
+            if ($movieOption["movie"] == 02) {
+                $movieOption["movie"] = "Fabian Bom";
+            }
+            if ($movieOption["movie"] == 03) {
+                $movieOption["movie"] = "Pensionat Paradiset";
+            }
+            if ($movieOption[0] == 01) {
+                $movieOption[0] = "Fredag";
+            }
+            if ($movieOption[0] == 02) {
+                $movieOption[0] = "Lördag";
+            }
+            if ($movieOption[0] == 03) {
+                $movieOption[0] = "Söndag";
+            }
+            array_push($availableMoviesToWatch, $movieOption);
         }
-        if ($movieOption["movie"] == 02) {
-            $movieOption["movie"] = "Fabian Bom";
-        }
-        if ($movieOption["movie"] == 03) {
-            $movieOption["movie"] = "Pensionat Paradiset";
-        }
-        if ($movieOption[0] == 01) {
-            $movieOption[0] = "Fredag";
-        }
-        if ($movieOption[0] == 02) {
-            $movieOption[0] = "Lördag";
-        }
-        if ($movieOption[0] == 03) {
-            $movieOption[0] = "Söndag";
-        }
-        array_push($availableMoviesToWatch, $movieOption);
-    }
 
-    foreach ($availableMoviesToWatch as $movie) {
-        echo "Alla kan se ".$movie["movie"]." klockan ".$movie["time"]." på ".$movie[0]."<br/>";
+        foreach ($availableMoviesToWatch as $movie) {
+            echo "Alla kan se ".$movie["movie"]." klockan ".$movie["time"]." på ".$movie[0]."<br/>";
+        }
     }
 }
+
+
 
 // Tar bort alla "/" från slutet av huvud url:en
 function trimSlashFromUrl($url){
@@ -76,29 +79,15 @@ function trimSlashFromUrl($url){
 }
 function checkButton() {
     if (isset($_POST['url'])) {
-        curl_get_request($_POST['url']);
+        file_get_contents($_POST['url']);
     }
 }
 
-// Funktion som gör ett anrop till url:en
-function curl_get_request($url) {
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $url);
-    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
-    // Talar om att det som ska hämtas, inte skrivs ut direkt
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-    // Exekverar anropet och stänger sedan ner det
-    $data = curl_exec($ch);
-    curl_close($ch);
-
-    return $data;
-}
 // Hämtar ut url:erna för varje person och gör ett anrop till funktionen getPersonCalendar
 // Returnerar funktionen checkAvailableCinemaDays som har dagarna i en array
 function getCalendarItems($calendar, $dom) {
     $personArray = array();
-    $data = curl_get_request($calendar);
+    $data = file_get_contents($calendar);
 
     libxml_use_internal_errors(true);
     if ($dom->loadHTML($data)) {
@@ -139,7 +128,7 @@ function checkAvailableCinemaDays($personArray) {
 // Funktion som kollar vilka dagar varje person har sagt "OK" på
 function getPersonCalendar($person, $dom) {
     $personCalendarArray = array();
-    $data = curl_get_request($person);
+    $data = file_get_contents($person);
     libxml_use_internal_errors(true);
 
     if ($dom->loadHTML($data)) {
@@ -156,7 +145,7 @@ function getPersonCalendar($person, $dom) {
 // Funktion som hämtar ur filmernas värde, lägger sedan in dom i arrayen $moviearray
 function getMovieValues($movieUrl, $dom) {
     $movieArray = array();
-    $data = curl_get_request($movieUrl);
+    $data = file_get_contents($movieUrl);
     libxml_use_internal_errors(true);
 
     if ($dom->loadHTML($data)) {
