@@ -69,8 +69,6 @@ function start() {
     }
 }
 
-
-
 // Tar bort alla "/" från slutet av huvud url:en
 function trimSlashFromUrl($url){
     $url = rtrim($url, '/');
@@ -86,7 +84,7 @@ function checkButton() {
 // Hämtar ut url:erna för varje person och gör ett anrop till funktionen getPersonCalendar
 // Returnerar funktionen checkAvailableCinemaDays som har dagarna i en array
 function getCalendarItems($calendar, $dom) {
-    $personArray = array();
+    $personCalendarArray = array();
     $data = file_get_contents($calendar);
 
     libxml_use_internal_errors(true);
@@ -97,17 +95,17 @@ function getCalendarItems($calendar, $dom) {
 
         $paulIndex =  $items->item(0)->getAttribute("href");
         $paulArray = getPersonCalendar($calendar."/".$paulIndex, $dom);
-        array_push($personArray, $paulArray);
+        array_push($personCalendarArray, $paulArray);
 
         $peterIndex =  $items->item(1)->getAttribute("href");
         $peterArray = getPersonCalendar($calendar."/".$peterIndex, $dom);
-        array_push($personArray, $peterArray);
+        array_push($personCalendarArray, $peterArray);
 
         $maryIndex =  $items->item(2)->getAttribute("href");
         $maryArray = getPersonCalendar($calendar."/".$maryIndex, $dom);
-        array_push($personArray, $maryArray);
+        array_push($personCalendarArray, $maryArray);
     }
-    return checkAvailableCinemaDays($personArray);
+    return checkAvailableCinemaDays($personCalendarArray);
 }
 
 //Lägger in tillgänliga dagar i en array
@@ -169,7 +167,7 @@ function checkAvailableCinema($availableDays, $movies , $movieUrl) {
 
     foreach ($availableDays as $days) {
         foreach ($movies as $movie) {
-            $data = curl_get_request($movieUrl."/check?day=".$days."&movie=".$movie);
+            $data = file_get_contents($movieUrl."/check?day=".$days."&movie=".$movie);
             $options = json_decode($data, true);
             foreach ($options as $option) {
                 if ($option["status"] != 0) {
